@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
 	  <GenerateRuntimeConfigurationFiles>True</GenerateRuntimeConfigurationFiles>
+	  <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,10 +25,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Repository\Repository.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Commands\" />
   </ItemGroup>
 
 </Project>

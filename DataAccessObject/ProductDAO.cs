@@ -39,31 +39,15 @@ namespace DataAccessObject
         {
             try
             {
-                /*var cacheData = _cacheService.GetData<IEnumerable<ProductDTO>>("products");
-                if (cacheData != null && cacheData.Count() > 0)
-                    return new ServiceResponse<IEnumerable<ProductDTO>>
-                    {
-                        Data = cacheData,
-                        Success = true,
-                        Message = "Successfully",
-                        StatusCode = 200
-                    };*/
+                
                 var data = await _dbContext.Products.Include(x => x.Category).OrderByDescending(x => x.ProductId).ToListAsync();
                 if (data != null)
                 {
-                    //using automapper
                     var config = new MapperConfiguration(cfg => cfg.CreateMap<Product, ProductDTO>()
                                                                     .ForMember(dto => dto.CategoryName,
                                                                     act => act.MapFrom(obj => obj.Category.CategoryName)));
-
                     var mapper = new Mapper(config);
                     var dataDTO = mapper.Map<IEnumerable<ProductDTO>>(data);
-
-                    // continue caching
-                    /*cacheData = dataDTO;*/
-                    //set expiry time
-                    /*var expiryTime = DateTimeOffset.Now.AddSeconds(30);
-                    _cacheService.SetData<IEnumerable<ProductDTO>>("products", cacheData, expiryTime);*/
                     return new ServiceResponse<IEnumerable<ProductDTO>>
                     {
                         Data = dataDTO,
@@ -79,6 +63,92 @@ namespace DataAccessObject
                     StatusCode = 200
                 };
 
+            }
+            catch (Exception ex)
+            {
+
+                throw new Exception(ex.Message);
+            }
+        }
+        public async Task<ServiceResponse<ProductDTO>> GetProductById(int id)
+        {
+            try
+            {
+                var res = await _dbContext.Products
+                    .Include(x => x.Category)
+                    .FirstOrDefaultAsync(x => x.ProductId == id);
+                if (res != null)
+                {
+                    var config = new MapperConfiguration(cfg => cfg.CreateMap<Product, ProductDTO>()
+                                                                    .ForMember(dto => dto.CategoryName, act => act.MapFrom(obj => obj.Category.CategoryName)));
+
+                    var mapper = new Mapper(config);
+                    var resDTO = mapper.Map<ProductDTO>(res);
+                    return new ServiceResponse<ProductDTO>
+                    { 
+                        Data = resDTO,
+                        Success = true,
+                        Message = "Successfully",
+                        StatusCode = 200
+                    };
+                }
+                return new ServiceResponse<ProductDTO>
+                { 
+                    Success = true,
+                    Message = "Not Found",
+                    StatusCode = 404
+                };
+            }
+            catch (Exception ex)
+            {
+
+                throw new Exception(ex.Message);
+            }
+        }
+        public async Task<ServiceResponse<string>> DeleteProduct(int id)
+        {
+            try
+            {
+                var pro = await _dbContext.Products.FirstOrDefaultAsync(x => x.ProductId == id);
+                if (pro != null)
+                { 
+                    _dbContext.Products.Remove(pro);
+                    await _dbContext.SaveChangesAsync();
+                    return new ServiceResponse<string>
+                    {
+                        Success = true,
+                        Message = "Successfully",
+                        StatusCode = 204
+                    };
+                }
+                return new ServiceResponse<string>
+                {
+                    Success = true,
+                    Message = "Not Found",
+                    StatusCode = 404
+                };
+            }
+            catch (Exception ex)
+            {
+
+                throw new Exception(ex.Message);
+            }
+        }
+        public async Task<ServiceResponse<Product>> AddNewProduct(Product product)
+        {
+            try
+            {
+                _dbContext.ChangeTracker.Clear();
+                var data = await _dbContext.Products.AddAsync(product);
+                await _dbContext.SaveChangesAsync();
+                
+                return new ServiceResponse<Product>
+                { 
+                    Data = data.Entity,
+                    Success = true,
+                    Message = "Successfully",
+                    StatusCode = 201
+                };
             }
             catch (Exception ex)
             {
